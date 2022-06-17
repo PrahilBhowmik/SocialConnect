@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Social Connect</string>
+    <string name="please_sign_in_with">Please Sign In with....</string>
+    <string name="your_web_client_id">380673968499-gim06f385j4fs00dpb2t9h4k9n4np8gj.apps.googleusercontent.com</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="name">Name</string>
+    <string name="save">Save</string>
+    <string name="log_out">Log Out</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="other_options">Other options</string>
+    <string name="posts">My Posts</string>
+    <string name="what_s_in_your_mind">What\'s in your mind?....</string>
+    <string name="write_your_post_below">Write your post below</string>
+    <string name="post">Post</string>
+    <string name="edit_image">Edit Image</string>
+</resources>

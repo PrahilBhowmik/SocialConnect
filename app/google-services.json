@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "380673968499",
+    "project_id": "social-connect-f289d",
+    "storage_bucket": "social-connect-f289d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380673968499:android:b956f817349eb8102b9d06",
+        "android_client_info": {
+          "package_name": "com.example.socialconnect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "380673968499-qhr8ibakg1ef901ubgj0gq9qdjnto16f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.socialconnect",
+            "certificate_hash": "8318de5e27ceca96de84cee30229637a351242b1"
+          }
+        },
+        {
+          "client_id": "380673968499-gim06f385j4fs00dpb2t9h4k9n4np8gj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCi2qjxuQJnwXWO8Ee1m9AmHWrskutw1lg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "380673968499-gim06f385j4fs00dpb2t9h4k9n4np8gj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
