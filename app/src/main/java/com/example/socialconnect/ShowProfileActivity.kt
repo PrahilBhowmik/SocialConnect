@@ -38,11 +38,6 @@ class ShowProfileActivity : AppCompatActivity(), IPostAdapter {
         user?.let {
             // Name, email address, and profile photo Url
             val name = user.displayName
-            if(name ==""){
-                val intent = Intent(this,EditProfileActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
             val photoUrl = user.photoUrl
             uid = user.uid
 

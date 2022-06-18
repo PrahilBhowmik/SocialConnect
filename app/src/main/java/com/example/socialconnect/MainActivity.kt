@@ -11,9 +11,7 @@ import com.example.socialconnect.daos.PostDao
 import com.example.socialconnect.models.Post
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.Query
-import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity(), IPostAdapter {
 
@@ -39,12 +37,6 @@ class MainActivity : AppCompatActivity(), IPostAdapter {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        if(Firebase.auth.currentUser!!.displayName==""){
-            val intent = Intent(this,EditProfileActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
 
         fab=findViewById(R.id.floatingActionButton)
         fab.setOnClickListener{

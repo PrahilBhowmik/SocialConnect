@@ -1,33 +1,78 @@
 package com.example.socialconnect
 
-import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.IntentSender
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.socialconnect.daos.UserDao
 import com.example.socialconnect.models.User
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.common.SignInButton
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class SignInActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var email: String
-    private lateinit var password: String
-    private lateinit var emailText: EditText
-    private lateinit var passwordText: EditText
-    private lateinit var btn: Button
-    private lateinit var tv1: TextView
-    private lateinit var tv2: TextView
-    private lateinit var tv3: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var linearLayout: LinearLayout
-    private var accountExist: Boolean = false
+    private lateinit var oneTapClient: SignInClient
+    private lateinit var signInRequest: BeginSignInRequest
+    private val REQ_ONE_TAP = 100
+    private lateinit var waitText: TextView
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when (requestCode) {
+            REQ_ONE_TAP -> {
+                try {
+                    val credential = oneTapClient.getSignInCredentialFromIntent(data)
+                    val idToken = credential.googleIdToken
+                    when {
+                        idToken != null -> {
+                            // Got an ID token from Google. Use it to authenticate
+                            // with your backend.
+                            val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                            auth.signInWithCredential(firebaseCredential)
+                                .addOnCompleteListener(this) { task ->
+                                    if (task.isSuccessful) {
+                                        // Sign in success, update UI with the signed-in user's information
+                                        Toast.makeText(this,"signInWithCredential:success",Toast.LENGTH_SHORT).show()
+                                        val user = auth.currentUser
+                                        updateUI(user)
+                                    } else {
+                                        // If sign in fails, display a message to the user.
+                                        Toast.makeText(this,"signInWithCredential:failure",Toast.LENGTH_SHORT).show()
+                                        updateUI(null)
+                                    }
+                                }
+                        }
+                        else -> {
+                            // Shouldn't happen.
+                            Toast.makeText(this,"signInWithCredential:failure",Toast.LENGTH_SHORT).show()
+                            updateUI(null)
+                        }
+                    }
+                } catch (e: ApiException) {
+                    // ...
+                    Toast.makeText(this,"signInWithCredential:failure",Toast.LENGTH_SHORT).show()
+                    updateUI(null)
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,55 +80,15 @@ class SignInActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        emailText=findViewById(R.id.EmailAddress)
-        passwordText=findViewById(R.id.TextPassword)
-        btn = findViewById(R.id.button)
-        tv1=findViewById(R.id.tv1)
-        tv2=findViewById(R.id.tv2)
-        tv3=findViewById(R.id.tv3)
-        progressBar=findViewById(R.id.progressBar)
-        linearLayout=findViewById(R.id.linearLayout)
+        linearLayout = findViewById(R.id.vericalLayout)
+        progressBar = findViewById(R.id.progressBar)
+        waitText = findViewById(R.id.waitText)
 
-        signInOrUpUI()
+        oneTapClient = Identity.getSignInClient(this)
 
-        tv3.setOnClickListener {
-            signInOrUpUI()
+        findViewById<SignInButton>(R.id.googleSignInBtn).setOnClickListener {
+            signIn()
         }
-
-        btn.setOnClickListener {
-            email = emailText.text.toString()
-            password = passwordText.text.toString()
-            progressBar.visibility=View.VISIBLE
-            linearLayout.visibility=View.GONE
-            if(accountExist)
-                signIn()
-            else
-                signUp()
-        }
-    }
-
-    private fun signInOrUpUI(){
-        val s1:String
-        val s2:String
-        val s3:String
-        if(accountExist)
-        {
-            accountExist=false
-            s1="Sign Up"
-            s2="If you have an account"
-            s3= " sign in"
-        }
-        else
-        {
-            accountExist=true
-            s1="Sign In"
-            s2="If you don't have an account"
-            s3= " sign up"
-        }
-        tv1.text = s1
-        tv2.text = s2
-        tv3.text = s3
-        btn.text = s1
     }
 
     public override fun onStart() {
@@ -96,66 +101,86 @@ class SignInActivity : AppCompatActivity() {
     }
 
     private fun signIn(){
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithEmail:success")
-                    val user = auth.currentUser
-                    updateUI(user)
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
+        //visibility
+        progressBar.visibility=View.VISIBLE
+        linearLayout.visibility=View.GONE
+        waitText.text = "Signing In"
+        waitText.visibility=View.VISIBLE
+
+        signInRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    // Your server's client ID, not your Android client ID.
+                    .setServerClientId(getString(R.string.your_web_client_id))
+                    // Only show accounts previously used to sign in.
+                    .setFilterByAuthorizedAccounts(true)
+                    .build())
+            // Automatically sign in when exactly one credential is retrieved.
+            .setAutoSelectEnabled(true)
+            .build()
+
+        oneTapClient.beginSignIn(signInRequest)
+            .addOnSuccessListener(this) { result ->
+                try {
+                    startIntentSenderForResult(
+                        result.pendingIntent.intentSender, REQ_ONE_TAP,
+                        null, 0, 0, 0, null)
+                } catch (e: IntentSender.SendIntentException) {
+                    Toast.makeText(this,"Something went wrong",Toast.LENGTH_SHORT).show()
                     updateUI(null)
                 }
+            }
+            .addOnFailureListener(this) { e ->
+                // No saved credentials found. Launch the One Tap sign-up flow, or
+                // do nothing and continue presenting the signed-out UI.
+                signUp()
             }
     }
 
     private fun signUp(){
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "createUserWithEmail:success")
-                    val user = auth.currentUser
-                    updateUI(user)
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
+        signInRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    // Your server's client ID, not your Android client ID.
+                    .setServerClientId(getString(R.string.your_web_client_id))
+                    .setFilterByAuthorizedAccounts(false)
+                    .build())
+            // Automatically sign in when exactly one credential is retrieved.
+            .setAutoSelectEnabled(true)
+            .build()
+
+        waitText.text="Signing Up"
+
+        oneTapClient.beginSignIn(signInRequest)
+            .addOnSuccessListener(this) { result ->
+                try {
+                    startIntentSenderForResult(
+                        result.pendingIntent.intentSender, REQ_ONE_TAP,
+                        null, 0, 0, 0, null)
+                } catch (e: IntentSender.SendIntentException) {
+                    Toast.makeText(this,"Something went wrong",Toast.LENGTH_SHORT).show()
                     updateUI(null)
                 }
+            }
+            .addOnFailureListener(this) { e ->
+                Toast.makeText(this,"Something went wrong",Toast.LENGTH_SHORT).show()
+                updateUI(null)
             }
     }
 
     private fun updateUI(firebaseUser: FirebaseUser?) {
         if(firebaseUser != null){
-            val userDao = UserDao()
-            if(firebaseUser.photoUrl.toString()!=""){
-                userDao.addUser(User(firebaseUser.uid,firebaseUser.displayName,firebaseUser.photoUrl.toString()))
-            }
-            else{
-                userDao.addUser(User(firebaseUser.uid,firebaseUser.displayName,"https://firebasestorage.googleapis.com/v0/b/social-connect-f289d." +
-                        "appspot.com/o/images%2FemptyUserImg.png?alt=media&token=8eb3221d-4ef7-4a51-8efb-da9f5114e31f"))
-            }
-
-            if(firebaseUser.displayName==""){
-                val intent = Intent(this,EditProfileActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
-            else{
-                val intent = Intent(this,MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
+            UserDao().addUser(User(firebaseUser.uid,firebaseUser.displayName,firebaseUser.photoUrl.toString()))
+            val intent = Intent(this,MainActivity::class.java)
+            startActivity(intent)
+            finish()
         }
         else{
             progressBar.visibility = View.GONE
             linearLayout.visibility=View.VISIBLE
+            waitText.visibility = View.GONE
         }
     }
 }
