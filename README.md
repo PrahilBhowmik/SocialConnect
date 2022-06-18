@@ -4,7 +4,7 @@ It is an android social media application developed with kotlin.
 
 # Apk download link
 
-https://drive.google.com/uc?export=download&id=18a4loC8TehhtuRMr7LB3Yfs6tbUmjA9H
+https://drive.google.com/uc?export=download&id=1IIAB7MYBeRO0qVo7sz9yG9BNQiooIGkH
 
 # Use and features
 
