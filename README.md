@@ -18,7 +18,8 @@ Like others posts.
 
 # Softwares and Libraris used
 
-Android Studio
-Firebase
-Glide
+Android Studio,
+Firebase,
+Glide,
 uCrop
+and corutines.
